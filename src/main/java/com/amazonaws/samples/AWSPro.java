@@ -18,6 +18,10 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.rekognition.AmazonRekognition;
 import com.amazonaws.services.rekognition.AmazonRekognitionClientBuilder;
 import com.amazonaws.services.rekognition.model.AmazonRekognitionException;
+import com.amazonaws.services.rekognition.model.CompareFacesMatch;
+import com.amazonaws.services.rekognition.model.CompareFacesRequest;
+import com.amazonaws.services.rekognition.model.CompareFacesResult;
+import com.amazonaws.services.rekognition.model.ComparedFace;
 import com.amazonaws.services.rekognition.model.DetectFacesRequest;
 import com.amazonaws.services.rekognition.model.DetectFacesResult;
 import com.amazonaws.services.rekognition.model.DetectLabelsRequest;
@@ -32,14 +36,24 @@ public class AWSPro {
 		
 		String photo = "pic3.jpg";
 		BufferedImage originalImage;
-		originalImage = ImageIO.read(new File("D:\\java-neon\\eclipse\\java\\Project\\resources\\pic.jpg"));
+		BufferedImage targetImage;
+		originalImage = ImageIO.read(new File("D:\\java-neon\\eclipse\\java\\Project\\resources\\pic1.jpg"));
+		targetImage = ImageIO.read(new File("D:\\java-neon\\eclipse\\java\\Project\\resources\\pic4.jpeg"));
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ImageIO.write(originalImage, "jpg", baos);
 		baos.flush();
 		byte[] imageInByte = baos.toByteArray();
+		baos.reset(); //baos를 reset하지 않으면 baos에 전의 데이터가 그대로 들어가므로 쌓이게 된다.
+		ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
+		ImageIO.write(targetImage, "jpg", baos);
+		baos.flush();		
+		byte[] targetimageInByte = baos.toByteArray();
 		System.out.println(imageInByte.length);
+		System.out.println(targetimageInByte.length);
 		baos.close();
-		ByteBuffer imageBytes = ByteBuffer.wrap(imageInByte);
+		baos1.close();
+		ByteBuffer imageBytes1 = ByteBuffer.wrap(imageInByte);
+		ByteBuffer imageBytes2 = ByteBuffer.wrap(targetimageInByte);
 		//ClassLoader classLoader = new AWSPro().getClass().getClassLoader();
 		
 		AWSCredentials credentials;
@@ -63,8 +77,26 @@ public class AWSPro {
 				.withCredentials(new AWSStaticCredentialsProvider(credentials))
 				.build();
 		
-		//displayFaceDetail(imageBytes, rekognitionClient, photo);
-		displayLabel(imageBytes, rekognitionClient, photo);
+		//displayFaceDetail(imageBytes1, rekognitionClient, photo);
+		displayLabel(imageBytes1, rekognitionClient, photo);
+		//compareFace(imageBytes1, imageBytes2, rekognitionClient);
+		
+		
+	}
+	
+	private static void compareFace(ByteBuffer imageBytes1, ByteBuffer imageBytes2, AmazonRekognition rekognitionClient){
+		CompareFacesRequest cfRequest = new CompareFacesRequest().withTargetImage(new Image().withBytes(imageBytes2))
+				.withSourceImage(new Image().withBytes(imageBytes1));
+		CompareFacesResult cfResult = rekognitionClient.compareFaces(cfRequest);
+		List<CompareFacesMatch> result = cfResult.getFaceMatches();
+		List<ComparedFace> unmatchedResult = cfResult.getUnmatchedFaces();
+		for(CompareFacesMatch cfm : result){
+			System.out.println("Wow : " + cfm.toString());
+		}
+		
+		for(ComparedFace cf : unmatchedResult){
+			System.out.println("NONO : " + cf.toString());
+		}
 	}
 	
 	private static void displayFaceDetail(ByteBuffer imageBytes, AmazonRekognition rekognitionClient, String photo){
