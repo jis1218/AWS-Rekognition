@@ -27,6 +27,8 @@ import com.amazonaws.services.rekognition.model.CompareFacesMatch;
 import com.amazonaws.services.rekognition.model.CompareFacesRequest;
 import com.amazonaws.services.rekognition.model.CompareFacesResult;
 import com.amazonaws.services.rekognition.model.ComparedFace;
+import com.amazonaws.services.rekognition.model.DeleteFacesRequest;
+import com.amazonaws.services.rekognition.model.DeleteFacesResult;
 import com.amazonaws.services.rekognition.model.DetectFacesRequest;
 import com.amazonaws.services.rekognition.model.DetectFacesResult;
 import com.amazonaws.services.rekognition.model.DetectLabelsRequest;
@@ -120,29 +122,14 @@ public class AWSPro{
 						System.out.println("============== 비교 후");
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
-						System.out.println("일치하는 얼굴이 없습니다");
 						
-					}
-//					
-//					try {						
-//						Thread.sleep(50);
-//					} catch (InterruptedException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-					
+						
+					}					
 				}
 			}
 			
 		}).start();
-		
-/*		AmazonRekognition rekognitionClient = AmazonRekognitionClientBuilder.standard().withRegion(Regions.US_WEST_2)
-				.withCredentials(new AWSStaticCredentialsProvider(credentials))
-				.build();
-		
-		//displayFaceDetail(imageBytes1, rekognitionClient, photo);
-		//displayLabel(imageBytes1, rekognitionClient, photo);
-		compareFace(imageBytes1, imageBytes2, rekognitionClient);*/
+
 		
 		
 		
@@ -150,21 +137,29 @@ public class AWSPro{
 	}
 	
 	private static void searchFacesMatch(AmazonRekognition rekognitionClient, ByteBuffer imageBytes1, String collectionId) throws Exception{
-		ObjectMapper objectMapper = new ObjectMapper();
+		ObjectMapper objectMapper = new ObjectMapper(); //JSon을 string으로 바꿔주는데 역할을 한다.
 		
 		Image image = new Image().withBytes(imageBytes1);
 		
 		SearchFacesByImageRequest searchFacesByImageRequest = new SearchFacesByImageRequest()
 				.withCollectionId(collectionId)
 				.withImage(image)
-				.withFaceMatchThreshold(70F)
-				.withMaxFaces(2);
+				.withFaceMatchThreshold(90F)
+				.withMaxFaces(3);
 		List<FaceMatch> faceImageMatches = null;
 		
+		try{
 		SearchFacesByImageResult searchFacesByImageResult = rekognitionClient.searchFacesByImage(searchFacesByImageRequest);
 		faceImageMatches = searchFacesByImageResult.getFaceMatches();
+		}catch(Exception e){
+			System.out.println("사람 얼굴이 아니거나 식별할 수 없습니다.");
+		}
 		
 		
+		if (faceImageMatches.size()==0){
+			System.out.println("해당 얼굴을 찾을 수 없습니다.");
+			return;
+		}
 		
 		for(FaceMatch face: faceImageMatches){
 			try {
@@ -173,19 +168,14 @@ public class AWSPro{
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				
+				
 			}
 		}		
 	}
 
 	private static void createCollection(AmazonRekognition rekognitionClient, ByteBuffer imageByte){
 		String collectionId = "MyCollection";
-		/*System.out.println("Creating collection: " + collectionId);
-		
-		CreateCollectionRequest request = new CreateCollectionRequest().withCollectionId(collectionId);
-		
-		CreateCollectionResult createCollectionResult = rekognitionClient.createCollection(request);
-		System.out.println("CollectionArn : " + createCollectionResult.getCollectionArn());
-		System.out.println("Status code : " + createCollectionResult.getStatusCode().toString());*/
 		
 		Image image = new Image().withBytes(imageByte);
 		
